@@ -1,49 +1,51 @@
-import { useCallback, useState } from "react"
+import { act, useCallback, useRef, useState } from "react"
 import QUESTION from '../questions.js'
 import logos from '../assets/quiz-complete.png'
-import QuestionTimer from "./QuestionTimer.jsx";
+import Question from "./Question.jsx";
 
 export default function Quiz() {
-    //    const [activeQuestion, setActiveQuestion] = useState(0);
-    const [userAns, setUserAns] = useState([]);
+  //    const [activeQuestion, setActiveQuestion] = useState(0);
+  const [userAns, setUserAns] = useState([]);
+  const [answerState, setAnswerState] = useState('');
+ 
+  const activeQuestionIndex = answerState === '' ? userAns.length : userAns.length - 1;
 
-    const activeQuestionIndex = userAns.length;
-  
-    const quizCompleted = activeQuestionIndex === QUESTION.length;
-
-
-   const handleSelectAnswer = useCallback( function handleSelectAnswer(selectedAns){
-      setUserAns((prevAns) => {
-         return[...prevAns, selectedAns]
-      });
-    }, []);
-
-    const handleskipAnswer = useCallback(() => handleSelectAnswer(null), [handleSelectAnswer]);
-
-    if(quizCompleted){
-        return <div id="summary">
-        <img src= {logos} alt="Success" />
-        <h2>Comleted</h2></div>
-    }
-      const shuffleAns = [...QUESTION[activeQuestionIndex].answers];
-    shuffleAns.sort(() => Math.random() -0.5);
+  const quizCompleted = activeQuestionIndex === QUESTION.length;
 
 
-    return(
-     <div id= "quiz">  
-     <div id="question">
-        <QuestionTimer
-        key = {activeQuestionIndex}
-         timeout={10000}  onTimeOut={handleskipAnswer}/>
-      <h2>{QUESTION[activeQuestionIndex].text}</h2>
-      <ul id="answers">
-        {shuffleAns.map((answer) => (
-            <li key={answer} className="answer">
-                <button onClick={() => handleSelectAnswer(answer)}>{answer}</button>
-            </li>
-        ))}
-      </ul>
+  const handleSelectAnswer = useCallback(function handleSelectAnswer(selectedAns) {
+    setAnswerState('answered');
+    setUserAns((prevAns) => {
+      return [...prevAns, selectedAns]
+    });
+    setTimeout(() => {
+      if (selectedAns === QUESTION[activeQuestionIndex].answers[0]) {
+        setAnswerState('correct');
+      } else {
+        setAnswerState('incorrect');
+      }
+
+      setTimeout(() => {
+        setAnswerState('');
+      }, 2000);
+
+    }, 1000)
+  }, [activeQuestionIndex]);
+
+  const handleskipAnswer = useCallback(() => handleSelectAnswer(null), [handleSelectAnswer]);
+
+  if (quizCompleted) {
+    return <div id="summary">
+      <img src={logos} alt="Success" />
+      <h2>Comleted</h2></div>
+  }
+
+
+
+
+  return (
+    <div id="quiz">
+    <Question key={activeQuestionIndex} answers={QUESTION[activeQuestionIndex].answers} questionText={QUESTION[activeQuestionIndex].text} onSelect ={handleSelectAnswer} answerState={answerState} selectedAns={userAns[userAns.length - 1]} onSkipAnswer = {handleskipAnswer}/>
     </div>
-    </div> 
-    );
+  );
 }
